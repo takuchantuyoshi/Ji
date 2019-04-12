@@ -59,13 +59,22 @@ open class Ji {
 	- returns: The initialized Ji document object or nil if the object could not be initialized.
 	*/
 	public required init?(data: Data?, encoding: String.Encoding, isXML: Bool) {
-		if let data = data, data.count > 0 {
+		if let data = data, !data.isEmpty {
 			self.isXML = isXML
 			self.data = data
 			self.encoding = encoding
 			
 			let bytes = UnsafeMutablePointer<UInt8>.allocate(capacity: data.count)
-			defer { bytes.deallocate(capacity: data.count) }
+			defer {
+                #if swift(>=4.1)
+                bytes.deinitialize(count: data.count)
+                bytes.deallocate()
+                #else
+                bytes.deinitialize()
+                bytes.deallocate(capacity: data.count)
+                #endif
+                
+            }
 			data.copyBytes(to: bytes, count: data.count)
 			let cBuffer = UnsafeRawPointer(bytes).assumingMemoryBound(to: CChar.self)
 			
